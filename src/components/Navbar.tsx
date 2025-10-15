@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Palette, User, LogOut, ShoppingCart, Heart, LayoutDashboard } from "lucide-react";
+import { Palette, User, LogOut, ShoppingCart, Heart, LayoutDashboard, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
@@ -67,6 +67,11 @@ export const Navbar = () => {
             <Link to="/gallery" className="text-foreground hover:text-secondary transition-colors">
               Gallery
             </Link>
+            {user && (
+              <Link to="/messages" className="text-foreground hover:text-secondary transition-colors">
+                Messages
+              </Link>
+            )}
             <Link to="/about" className="text-foreground hover:text-secondary transition-colors">
               About
             </Link>
@@ -78,6 +83,11 @@ export const Navbar = () => {
           <div className="flex items-center gap-3">
             {user ? (
               <>
+                <Link to="/messages">
+                  <Button variant="ghost" size="icon">
+                    <MessageCircle className="w-5 h-5" />
+                  </Button>
+                </Link>
                 <Link to="/favorites">
                   <Button variant="ghost" size="icon">
                     <Heart className="w-5 h-5" />

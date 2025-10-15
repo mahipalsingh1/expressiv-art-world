@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart, MessageCircle, User, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
+import { ChatWindow } from "@/components/ChatWindow";
 
 export default function ArtworkDetail() {
   const { id } = useParams();
@@ -18,6 +19,7 @@ export default function ArtworkDetail() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -236,18 +238,31 @@ export default function ArtworkDetail() {
             </Card>
 
             {/* Actions */}
-            <div className="flex gap-3">
-              <Button className="flex-1" size="lg" onClick={handleBuyNow}>
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Buy Now
-              </Button>
-              <Button
-                variant={isFavorited ? "secondary" : "outline"}
-                size="lg"
-                onClick={toggleFavorite}
-              >
-                <Heart className={`w-5 h-5 ${isFavorited ? "fill-current" : ""}`} />
-              </Button>
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <Button className="flex-1" size="lg" onClick={handleBuyNow}>
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Buy Now
+                </Button>
+                <Button
+                  variant={isFavorited ? "secondary" : "outline"}
+                  size="lg"
+                  onClick={toggleFavorite}
+                >
+                  <Heart className={`w-5 h-5 ${isFavorited ? "fill-current" : ""}`} />
+                </Button>
+              </div>
+              {user && user.id !== artwork.artist_id && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => setShowChat(true)}
+                >
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Chat with Seller
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -295,6 +310,17 @@ export default function ArtworkDetail() {
           </div>
         </div>
       </div>
+
+      {showChat && user && artwork && (
+        <ChatWindow
+          artworkId={artwork.id}
+          sellerId={artwork.artist_id}
+          sellerName={artwork.profiles?.full_name || "Artist"}
+          sellerPhoto={artwork.profiles?.profile_photo}
+          currentUserId={user.id}
+          onClose={() => setShowChat(false)}
+        />
+      )}
     </div>
   );
 }
