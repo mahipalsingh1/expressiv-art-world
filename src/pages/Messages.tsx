@@ -4,89 +4,93 @@ import { Navbar } from "@/components/Navbar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageCircle, User } from "lucide-react";
-import { ChatWindow } from "@/components/ChatWindow";
+import { User, MessageCircle } from "lucide-react";
 
 export default function Messages() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
   const [conversations, setConversations] = useState<any[]>([]);
-  const [selectedChat, setSelectedChat] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.user) {
+      if (!session) {
         navigate("/auth");
-      } else {
-        setUser(session.user);
+        return;
       }
+      setUser(session.user);
+      loadConversations(session.user.id);
     });
   }, [navigate]);
 
-  useEffect(() => {
-    if (user) {
-      loadConversations();
-    }
-  }, [user]);
-
-  const loadConversations = async () => {
+  const loadConversations = async (userId: string) => {
     const { data } = await supabase
       .from("conversations")
       .select(`
         *,
-        artworks:artwork_id (id, title, image_url),
-        buyer_profile:buyer_id (full_name, profile_photo),
-        seller_profile:seller_id (full_name, profile_photo)
+        artworks (id, title, image_url),
+        buyer:buyer_id (id, full_name, profile_photo),
+        seller:seller_id (id, full_name, profile_photo),
+        messages (content, created_at)
       `)
-      .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+      .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
       .order("updated_at", { ascending: false });
 
     setConversations(data || []);
+    setLoading(false);
   };
 
-  const handleConversationClick = (conv: any) => {
-    const otherUser =
-      conv.buyer_id === user.id ? conv.seller_profile : conv.buyer_profile;
-    const otherUserId = conv.buyer_id === user.id ? conv.seller_id : conv.buyer_id;
-
-    setSelectedChat({
-      artworkId: conv.artwork_id,
-      sellerId: otherUserId,
-      sellerName: otherUser?.full_name || "Unknown User",
-      sellerPhoto: otherUser?.profile_photo,
-    });
+  const getOtherUser = (conversation: any) => {
+    if (!user) return null;
+    return conversation.buyer_id === user.id
+      ? conversation.seller
+      : conversation.buyer;
   };
+
+  const getLastMessage = (conversation: any) => {
+    if (!conversation.messages || conversation.messages.length === 0)
+      return "No messages yet";
+    const sorted = conversation.messages.sort(
+      (a: any, b: any) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    return sorted[0]?.content || "No messages yet";
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Messages</h1>
+        <h1 className="text-4xl font-bold mb-8">My Messages</h1>
 
         {conversations.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
               <MessageCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">No messages yet</h3>
-              <p className="text-muted-foreground">
-                Start a conversation with an artist by visiting their artwork
-              </p>
+              <p className="text-xl text-muted-foreground">No conversations yet</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
-            {conversations.map((conv) => {
-              const otherUser =
-                conv.buyer_id === user.id
-                  ? conv.seller_profile
-                  : conv.buyer_profile;
-
+          <div className="max-w-3xl space-y-4">
+            {conversations.map((conversation) => {
+              const otherUser = getOtherUser(conversation);
               return (
                 <Card
-                  key={conv.id}
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => handleConversationClick(conv)}
+                  key={conversation.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() =>
+                    navigate(`/artwork/${conversation.artwork_id}`)
+                  }
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
@@ -97,21 +101,25 @@ export default function Messages() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-semibold">
-                          {otherUser?.full_name || "Unknown User"}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {conv.artworks?.title}
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold">
+                            {otherUser?.full_name || "Unknown User"}
+                          </p>
+                          <span className="text-xs text-muted-foreground">•</span>
+                          <p className="text-sm text-muted-foreground">
+                            {conversation.artworks?.title}
+                          </p>
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-1">
+                          {getLastMessage(conversation)}
                         </p>
                       </div>
-                      {conv.artworks?.image_url && (
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted">
-                          <img
-                            src={conv.artworks.image_url}
-                            alt={conv.artworks.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+                      {conversation.artworks?.image_url && (
+                        <img
+                          src={conversation.artworks.image_url}
+                          alt={conversation.artworks.title}
+                          className="w-16 h-16 rounded object-cover"
+                        />
                       )}
                     </div>
                   </CardContent>
@@ -121,17 +129,6 @@ export default function Messages() {
           </div>
         )}
       </div>
-
-      {selectedChat && (
-        <ChatWindow
-          artworkId={selectedChat.artworkId}
-          sellerId={selectedChat.sellerId}
-          sellerName={selectedChat.sellerName}
-          sellerPhoto={selectedChat.sellerPhoto}
-          currentUserId={user.id}
-          onClose={() => setSelectedChat(null)}
-        />
-      )}
     </div>
   );
 }

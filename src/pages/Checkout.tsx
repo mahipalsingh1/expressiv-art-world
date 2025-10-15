@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ShoppingCart } from "lucide-react";
 
 export default function Checkout() {
   const { id } = useParams();
@@ -29,19 +28,14 @@ export default function Checkout() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
-        toast.error("Please login to checkout");
+      if (!session) {
         navigate("/auth");
+        return;
       }
-    });
-  }, [navigate]);
-
-  useEffect(() => {
-    if (id) {
+      setUser(session.user);
       loadArtwork();
-    }
-  }, [id]);
+    });
+  }, [id, navigate]);
 
   const loadArtwork = async () => {
     const { data } = await supabase
@@ -53,13 +47,12 @@ export default function Checkout() {
       .eq("id", id)
       .single();
 
-    if (data?.is_sold) {
-      toast.error("This artwork has already been sold");
+    if (data) {
+      setArtwork(data);
+    } else {
+      toast.error("Artwork not found");
       navigate("/gallery");
-      return;
     }
-
-    setArtwork(data);
     setLoading(false);
   };
 
@@ -71,9 +64,9 @@ export default function Checkout() {
 
     try {
       const { error } = await supabase.from("orders").insert({
-        artwork_id: artwork.id,
         buyer_id: user.id,
         seller_id: artwork.artist_id,
+        artwork_id: artwork.id,
         total_amount: artwork.price,
         payment_method: "Cash on Delivery",
         shipping_address: formData.address,
@@ -93,9 +86,9 @@ export default function Checkout() {
         .eq("id", artwork.id);
 
       toast.success("Order placed successfully with Cash on Delivery!");
-      navigate("/profile");
+      navigate("/");
     } catch (error: any) {
-      toast.error(error.message || "Failed to place order");
+      toast.error(error.message);
     } finally {
       setSubmitting(false);
     }
@@ -105,25 +98,13 @@ export default function Checkout() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/4" />
-            <div className="h-64 bg-muted rounded" />
-          </div>
-        </div>
+        <div className="container mx-auto px-4 py-8">Loading...</div>
       </div>
     );
   }
 
   if (!artwork) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-xl">Artwork not found</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -131,7 +112,7 @@ export default function Checkout() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+        <h1 className="text-4xl font-bold mb-8">Checkout</h1>
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Order Summary */}
@@ -149,109 +130,107 @@ export default function Checkout() {
               </div>
               <div>
                 <h3 className="font-semibold text-lg">{artwork.title}</h3>
-                <p className="text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   by {artwork.profiles?.full_name}
                 </p>
               </div>
-              <div className="flex justify-between items-center pt-4 border-t">
-                <span className="font-semibold">Total</span>
-                <span className="text-2xl font-bold text-primary">
-                  ${artwork.price}
-                </span>
-              </div>
-              <div className="bg-accent/20 p-4 rounded-lg">
-                <p className="text-sm font-medium">Payment Method</p>
-                <p className="text-lg font-semibold">Cash on Delivery</p>
+              <div className="pt-4 border-t">
+                <div className="flex justify-between text-lg font-bold">
+                  <span>Total Amount:</span>
+                  <span>${artwork.price}</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Payment Method: Cash on Delivery
+                </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Shipping Form */}
+          {/* Shipping Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Shipping Information</CardTitle>
+              <CardTitle>Shipping Details</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Full Name</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name *</Label>
                   <Input
                     id="name"
-                    required
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
+                    required
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number *</Label>
                   <Input
                     id="phone"
                     type="tel"
-                    required
                     value={formData.phone}
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
+                    required
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="address">Address</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address *</Label>
                   <Input
                     id="address"
-                    required
                     value={formData.address}
                     onChange={(e) =>
                       setFormData({ ...formData, address: e.target.value })
                     }
+                    required
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="city">City</Label>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City *</Label>
                     <Input
                       id="city"
-                      required
                       value={formData.city}
                       onChange={(e) =>
                         setFormData({ ...formData, city: e.target.value })
                       }
+                      required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="state">State</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State *</Label>
                     <Input
                       id="state"
-                      required
                       value={formData.state}
                       onChange={(e) =>
                         setFormData({ ...formData, state: e.target.value })
                       }
+                      required
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="country">Country</Label>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country *</Label>
                     <Input
                       id="country"
-                      required
                       value={formData.country}
                       onChange={(e) =>
                         setFormData({ ...formData, country: e.target.value })
                       }
+                      required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="postalCode">Postal Code</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="postalCode">Postal Code *</Label>
                     <Input
                       id="postalCode"
-                      required
                       value={formData.postalCode}
                       onChange={(e) =>
                         setFormData({
@@ -259,6 +238,7 @@ export default function Checkout() {
                           postalCode: e.target.value,
                         })
                       }
+                      required
                     />
                   </div>
                 </div>
@@ -269,8 +249,7 @@ export default function Checkout() {
                   size="lg"
                   disabled={submitting}
                 >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  {submitting ? "Placing Order..." : "Place Order (COD)"}
+                  {submitting ? "Placing Order..." : "Place Order (Cash on Delivery)"}
                 </Button>
               </form>
             </CardContent>

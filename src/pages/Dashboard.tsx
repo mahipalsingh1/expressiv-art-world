@@ -115,7 +115,7 @@ export default function Dashboard() {
       medium: formData.medium || null,
       dimensions: formData.dimensions || null,
       year_created: formData.yearCreated ? parseInt(formData.yearCreated) : null,
-      status: "pending" as const,
+      status: "approved" as const,
     };
 
     try {
@@ -129,7 +129,7 @@ export default function Dashboard() {
       } else {
         const { error } = await supabase.from("artworks").insert(artworkData);
         if (error) throw error;
-        toast.success("Artwork uploaded! Waiting for approval.");
+        toast.success("Artwork uploaded successfully!");
       }
 
       setIsDialogOpen(false);

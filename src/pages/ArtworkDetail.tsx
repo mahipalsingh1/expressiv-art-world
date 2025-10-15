@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart, MessageCircle, User, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
-import { ChatWindow } from "@/components/ChatWindow";
+import { ChatBox } from "@/components/ChatBox";
 
 export default function ArtworkDetail() {
   const { id } = useParams();
@@ -130,6 +130,19 @@ export default function ArtworkDetail() {
       return;
     }
     navigate(`/checkout/${id}`);
+  };
+
+  const handleChatWithSeller = () => {
+    if (!user) {
+      toast.error("Please login to chat");
+      navigate("/auth");
+      return;
+    }
+    if (user.id === artwork.artist_id) {
+      toast.error("You cannot chat with yourself");
+      return;
+    }
+    setShowChat(true);
   };
 
   if (loading) {
@@ -311,13 +324,11 @@ export default function ArtworkDetail() {
         </div>
       </div>
 
-      {showChat && user && artwork && (
-        <ChatWindow
+      {showChat && artwork && (
+        <ChatBox
           artworkId={artwork.id}
           sellerId={artwork.artist_id}
-          sellerName={artwork.profiles?.full_name || "Artist"}
-          sellerPhoto={artwork.profiles?.profile_photo}
-          currentUserId={user.id}
+          sellerName={artwork.profiles?.full_name || "Seller"}
           onClose={() => setShowChat(false)}
         />
       )}
