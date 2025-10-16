@@ -56,7 +56,7 @@ export default function Favorites() {
                 <p className="text-sm text-muted-foreground">
                   by {fav.artworks.profiles?.full_name}
                 </p>
-                <p className="text-lg font-bold text-secondary mt-2">${fav.artworks.price}</p>
+                <p className="text-lg font-bold text-secondary mt-2">₹{fav.artworks.price}</p>
               </CardContent>
             </Card>
           ))}

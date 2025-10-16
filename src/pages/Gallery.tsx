@@ -136,7 +136,7 @@ export default function Gallery() {
                     by {artwork.profiles?.full_name || "Unknown Artist"}
                   </p>
                   <div className="flex justify-between items-center">
-                    <p className="text-lg font-bold text-secondary">${artwork.price}</p>
+                    <p className="text-lg font-bold text-secondary">₹{artwork.price}</p>
                     <span className="text-xs text-muted-foreground">{artwork.category}</span>
                   </div>
                 </CardContent>

@@ -16,12 +16,14 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdmin(session.user.id);
+        loadProfile(session.user.id);
       }
     });
 
@@ -29,8 +31,10 @@ export const Navbar = () => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdmin(session.user.id);
+        loadProfile(session.user.id);
       } else {
         setIsAdmin(false);
+        setProfile(null);
       }
     });
 
@@ -45,6 +49,15 @@ export const Navbar = () => {
       .eq("role", "admin")
       .single();
     setIsAdmin(!!data);
+  };
+
+  const loadProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    setProfile(data);
   };
 
   const handleLogout = async () => {
@@ -112,6 +125,12 @@ export const Navbar = () => {
                       <Package className="mr-2 h-4 w-4" />
                       My Orders
                     </DropdownMenuItem>
+                    {profile?.user_type === "seller" && (
+                      <DropdownMenuItem onClick={() => navigate("/seller-orders")}>
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        Order Requests
+                      </DropdownMenuItem>
+                    )}
                     {isAdmin && (
                       <DropdownMenuItem onClick={() => navigate("/admin")}>
                         <LayoutDashboard className="mr-2 h-4 w-4" />

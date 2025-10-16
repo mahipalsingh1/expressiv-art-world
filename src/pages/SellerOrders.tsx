@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, MapPin, CreditCard } from "lucide-react";
 
-export default function Orders() {
+export default function SellerOrders() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,22 +20,38 @@ export default function Orders() {
         return;
       }
       setUser(session.user);
-      loadOrders(session.user.id);
+      loadProfile(session.user.id);
     });
   }, [navigate]);
 
+  const loadProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    
+    setProfile(data);
+    
+    if (data?.user_type === "seller") {
+      loadOrders(userId);
+    } else {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (!user) return;
+    if (!user || !profile || profile.user_type !== "seller") return;
 
     const channel = supabase
-      .channel("orders-changes")
+      .channel("seller-orders-changes")
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "orders",
-          filter: `buyer_id=eq.${user.id}`,
+          filter: `seller_id=eq.${user.id}`,
         },
         () => {
           loadOrders(user.id);
@@ -45,7 +62,7 @@ export default function Orders() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, profile]);
 
   const loadOrders = async (userId: string) => {
     const { data } = await supabase
@@ -53,9 +70,9 @@ export default function Orders() {
       .select(`
         *,
         artworks (id, title, image_url),
-        seller:seller_id (id, full_name)
+        buyer:buyer_id (id, full_name)
       `)
-      .eq("buyer_id", userId)
+      .eq("seller_id", userId)
       .order("created_at", { ascending: false });
 
     setOrders(data || []);
@@ -88,18 +105,33 @@ export default function Orders() {
     );
   }
 
+  if (!profile || profile.user_type !== "seller") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-xl mb-4">This page is only for sellers</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8">My Orders</h1>
+        <h1 className="text-4xl font-bold mb-8">Order Requests</h1>
 
         {orders.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
               <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-xl text-muted-foreground">No orders yet</p>
+              <p className="text-xl text-muted-foreground">No order requests yet</p>
             </CardContent>
           </Card>
         ) : (
@@ -141,7 +173,7 @@ export default function Orders() {
                           {order.artworks?.title || "Unknown Artwork"}
                         </h3>
                         <p className="text-muted-foreground">
-                          by {order.seller?.full_name || "Unknown Artist"}
+                          Buyer: {order.buyer?.full_name || "Unknown Buyer"}
                         </p>
                       </div>
 

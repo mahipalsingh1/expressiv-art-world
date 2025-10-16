@@ -137,7 +137,7 @@ export default function Checkout() {
               <div className="pt-4 border-t">
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total Amount:</span>
-                  <span>${artwork.price}</span>
+                  <span>₹{artwork.price}</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
                   Payment Method: Cash on Delivery

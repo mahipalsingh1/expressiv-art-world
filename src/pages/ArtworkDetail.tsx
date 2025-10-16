@@ -190,7 +190,7 @@ export default function ArtworkDetail() {
           <div className="space-y-6">
             <div>
               <h1 className="text-4xl font-bold mb-2">{artwork.title}</h1>
-              <p className="text-xl text-secondary font-bold">${artwork.price}</p>
+              <p className="text-xl text-secondary font-bold">₹{artwork.price}</p>
             </div>
 
             {artwork.description && (

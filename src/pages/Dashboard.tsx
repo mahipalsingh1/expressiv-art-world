@@ -270,7 +270,7 @@ export default function Dashboard() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="price">Price (USD) *</Label>
+                    <Label htmlFor="price">Price (₹) *</Label>
                     <Input
                       id="price"
                       type="number"
@@ -381,7 +381,7 @@ export default function Dashboard() {
               </div>
               <CardContent className="p-4">
                 <h3 className="font-semibold text-lg mb-1 line-clamp-1">{artwork.title}</h3>
-                <p className="text-sm text-muted-foreground mb-2">${artwork.price}</p>
+                <p className="text-sm text-muted-foreground mb-2">₹{artwork.price}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-xs px-2 py-1 rounded-full bg-muted capitalize">
                     {artwork.status}

@@ -37,10 +37,10 @@ export default function Home() {
   };
 
   const categories = [
-    { name: "Abstract", count: "120+" },
-    { name: "Portrait", count: "85+" },
-    { name: "Landscape", count: "95+" },
-    { name: "Modern", count: "110+" },
+    { name: "Abstract" },
+    { name: "Portrait" },
+    { name: "Landscape" },
+    { name: "Modern" },
   ];
 
   return (
@@ -110,8 +110,7 @@ export default function Home() {
                 onClick={() => navigate(`/gallery?category=${category.name}`)}
               >
                 <CardContent className="p-6 text-center">
-                  <h3 className="font-semibold text-lg mb-1">{category.name}</h3>
-                  <p className="text-sm text-muted-foreground">{category.count} artworks</p>
+                  <h3 className="font-semibold text-lg">{category.name}</h3>
                 </CardContent>
               </Card>
             ))}
@@ -147,7 +146,7 @@ export default function Home() {
                   <p className="text-sm text-muted-foreground mb-2">
                     by {artwork.profiles?.full_name || "Unknown Artist"}
                   </p>
-                  <p className="text-lg font-bold text-secondary">${artwork.price}</p>
+                  <p className="text-lg font-bold text-secondary">₹{artwork.price}</p>
                 </CardContent>
               </Card>
             ))}
