@@ -23,6 +23,40 @@ export default function Messages() {
     });
   }, [navigate]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel("conversations-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "conversations",
+        },
+        () => {
+          loadConversations(user.id);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+        },
+        () => {
+          loadConversations(user.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const loadConversations = async (userId: string) => {
     const { data } = await supabase
       .from("conversations")

@@ -31,7 +31,7 @@ export default function Orders() {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "orders",
           filter: `buyer_id=eq.${user.id}`,

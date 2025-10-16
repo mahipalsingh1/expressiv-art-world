@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, MapPin, CreditCard } from "lucide-react";
+import { toast } from "sonner";
 
 export default function SellerOrders() {
   const navigate = useNavigate();
@@ -48,7 +50,7 @@ export default function SellerOrders() {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "orders",
           filter: `seller_id=eq.${user.id}`,
@@ -77,6 +79,21 @@ export default function SellerOrders() {
 
     setOrders(data || []);
     setLoading(false);
+  };
+
+  const handleStatusUpdate = async (orderId: string, newStatus: any) => {
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: newStatus as any })
+      .eq("id", orderId);
+
+    if (error) {
+      toast.error("Failed to update order status");
+      return;
+    }
+
+    toast.success("Order status updated successfully");
+    if (user) loadOrders(user.id);
   };
 
   const getStatusColor = (status: string) => {
@@ -143,9 +160,26 @@ export default function SellerOrders() {
                     <CardTitle className="text-lg">
                       Order #{order.id.slice(0, 8)}
                     </CardTitle>
-                    <Badge className={getStatusColor(order.status)}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                    </Badge>
+                    <div className="flex items-center gap-3">
+                      <Select
+                        value={order.status}
+                        onValueChange={(value) => handleStatusUpdate(order.id, value)}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="shipped">Shipped</SelectItem>
+                          <SelectItem value="delivered">Delivered</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Badge className={getStatusColor(order.status)}>
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      </Badge>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {new Date(order.created_at).toLocaleDateString("en-US", {
