@@ -119,7 +119,11 @@ export function ChatBox({ artworkId, sellerId, sellerName, onClose }: ChatBoxPro
             .single();
 
           if (data) {
-            setMessages((prev) => [...prev, data]);
+            setMessages((prev) => {
+              const exists = prev.some(msg => msg.id === data.id);
+              if (exists) return prev;
+              return [...prev, data];
+            });
           }
         }
       )

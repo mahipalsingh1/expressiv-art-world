@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Palette, User, LogOut, ShoppingCart, Heart, LayoutDashboard, MessageCircle } from "lucide-react";
+import { Palette, User, LogOut, ShoppingCart, Heart, LayoutDashboard, MessageCircle, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
@@ -107,6 +107,10 @@ export const Navbar = () => {
                     <DropdownMenuItem onClick={() => navigate("/dashboard")}>
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/orders")}>
+                      <Package className="mr-2 h-4 w-4" />
+                      My Orders
                     </DropdownMenuItem>
                     {isAdmin && (
                       <DropdownMenuItem onClick={() => navigate("/admin")}>
