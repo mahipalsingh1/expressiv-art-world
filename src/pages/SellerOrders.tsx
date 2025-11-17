@@ -100,7 +100,7 @@ export default function SellerOrders() {
     switch (status) {
       case "pending":
         return "bg-yellow-500/10 text-yellow-500";
-      case "confirmed":
+      case "processing":
         return "bg-blue-500/10 text-blue-500";
       case "shipped":
         return "bg-purple-500/10 text-purple-500";
@@ -168,9 +168,9 @@ export default function SellerOrders() {
                         <SelectTrigger className="w-[140px]">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-background border-border z-50">
                           <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="processing">Processing</SelectItem>
                           <SelectItem value="shipped">Shipped</SelectItem>
                           <SelectItem value="delivered">Delivered</SelectItem>
                           <SelectItem value="cancelled">Cancelled</SelectItem>

@@ -66,7 +66,7 @@ export default function Orders() {
     switch (status) {
       case "pending":
         return "bg-yellow-500/10 text-yellow-500";
-      case "confirmed":
+      case "processing":
         return "bg-blue-500/10 text-blue-500";
       case "shipped":
         return "bg-purple-500/10 text-purple-500";

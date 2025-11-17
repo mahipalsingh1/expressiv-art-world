@@ -12,6 +12,13 @@ export default function Home() {
   const navigate = useNavigate();
   const [featuredArtworks, setFeaturedArtworks] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+  }, []);
 
   useEffect(() => {
     loadFeaturedArtworks();
@@ -34,6 +41,14 @@ export default function Home() {
 
   const handleSearch = () => {
     navigate(`/gallery?search=${encodeURIComponent(searchQuery)}`);
+  };
+
+  const handleStartSelling = () => {
+    if (user) {
+      navigate("/dashboard");
+    } else {
+      navigate("/auth?tab=signup");
+    }
   };
 
   const categories = [
@@ -69,7 +84,7 @@ export default function Home() {
               <Button size="lg" onClick={() => navigate("/gallery")} className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
                 Explore Gallery
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/auth?tab=signup")} className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20">
+              <Button size="lg" variant="outline" onClick={handleStartSelling} className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20">
                 Start Selling
               </Button>
             </div>
