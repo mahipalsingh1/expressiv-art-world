@@ -3,14 +3,27 @@ import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, MapPin, CreditCard } from "lucide-react";
+import { Package, MapPin, CreditCard, XCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Orders() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -79,6 +92,24 @@ export default function Orders() {
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!cancellingOrderId) return;
+
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "cancelled" })
+      .eq("id", cancellingOrderId);
+
+    if (error) {
+      toast.error("Failed to cancel order");
+      return;
+    }
+
+    toast.success("Order cancelled successfully");
+    setCancellingOrderId(null);
+    if (user) loadOrders(user.id);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -111,9 +142,21 @@ export default function Orders() {
                     <CardTitle className="text-lg">
                       Order #{order.id.slice(0, 8)}
                     </CardTitle>
-                    <Badge className={getStatusColor(order.status)}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getStatusColor(order.status)}>
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      </Badge>
+                      {order.status === "pending" && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setCancellingOrderId(order.id)}
+                        >
+                          <XCircle className="w-4 h-4 mr-1" />
+                          Cancel Order
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {new Date(order.created_at).toLocaleDateString("en-US", {
@@ -187,6 +230,23 @@ export default function Orders() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!cancellingOrderId} onOpenChange={() => setCancellingOrderId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this order? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, Keep Order</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelOrder} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Yes, Cancel Order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
