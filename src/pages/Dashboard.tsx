@@ -307,7 +307,6 @@ export default function Dashboard() {
                         <SelectItem value="Portrait">Portrait</SelectItem>
                         <SelectItem value="Landscape">Landscape</SelectItem>
                         <SelectItem value="Modern">Modern</SelectItem>
-                        <SelectItem value="Sculpture">Sculpture</SelectItem>
                         <SelectItem value="Photography">Photography</SelectItem>
                       </SelectContent>
                     </Select>

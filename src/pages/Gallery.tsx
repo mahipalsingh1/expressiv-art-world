@@ -54,7 +54,7 @@ export default function Gallery() {
     setLoading(false);
   };
 
-  const categories = ["all", "Abstract", "Portrait", "Landscape", "Modern", "Sculpture", "Photography"];
+  const categories = ["all", "Abstract", "Portrait", "Landscape", "Modern", "Photography"];
 
   return (
     <div className="min-h-screen bg-background">
